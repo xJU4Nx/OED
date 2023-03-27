@@ -73,7 +73,7 @@ router.post('/edit', async (req, res) => {
 	} else {
 		const conn = getConnection();
 		try {
-			const updatedConversion = new Conversion(req.body.sourceId, req.body.destinationId, req.body.bidirectional,
+			const updatedConversion = new Conversion(-1, req.body.destinationId, req.body.bidirectional,
 				req.body.slope, req.body.intercept, req.body.note);
 			await updatedConversion.update(conn);
 		} catch (err) {
@@ -122,13 +122,13 @@ router.post('/addConversion', async (req, res) => {
 	const validationResult = validate(req.body, validConversion);
 	if (!validationResult.valid) {
 		log.error(`Invalid input for conversion. ${validationResult.error}`);
-        failure(res, 400, 'Invalid input for conversion: ' + validationResult.error.toString());
+        failure(res, 400, 'Invalid input for conversion: ' + validationResult.errors.toString());
 	} else {
 		const conn = getConnection();
 		try {
 			await conn.tx(async t => {
 				const newConversion = new Conversion(
-					req.body.sourceId,
+					-1,
 					req.body.destinationId,
 					req.body.bidirectional,
 					req.body.slope,
@@ -177,7 +177,7 @@ router.post('/delete', async (req, res) => {
 		try {
 			// Don't worry about checking if the conversion already exists
 			// Just try to delete it to save the extra database call, since the database will return an error anyway if the row does not exist
-			await Conversion.delete(req.body.sourceId, req.body.destinationId, conn);
+			await Conversion.delete(-1, req.body.destinationId, conn);
 		} catch (err) {
 			log.error('Failed to delete conversion', err);
 			res.status(500).json({ message: 'Unable to delete conversions.', err });
